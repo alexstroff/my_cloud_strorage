@@ -60,6 +60,8 @@ public class Controller {
 
     String clientFileName;
     String serverFileName;
+    String rootPath = "client/files";
+    String clientPath = rootPath;
 
 
     final String IP_ADRESS = "localhost";
@@ -143,7 +145,7 @@ public class Controller {
 
 
                         while (true) {
-                            broadcastClientFile();
+                            broadcastClientFile(clientPath);
 
                             String str = in.readUTF();
                             if (str.startsWith("/")) {
@@ -203,8 +205,8 @@ public class Controller {
         }
     }
 
-    public void broadcastClientFile(){
-        File file = new File("client/files");
+    public void broadcastClientFile(String path){
+        File file = new File(clientPath);
         StringBuilder sb = new StringBuilder();
 
         String[] str = file.list();
@@ -213,11 +215,23 @@ public class Controller {
         }
         String out = sb.toString();
 
+        if(clientFileList.getItems().equals("up")){
+            clientPath = clientPath + "/up";
+            System.out.println("up");
+        }
+
         String[] tokens = out.split(" ");
         Platform.runLater(() -> {
             clientFileList.getItems().clear();
-            for (int i = 0; i < tokens.length; i++) {
-                clientFileList.getItems().add(tokens[i]);
+            if(clientPath.equals("client/files")) {
+                for (int i = 0; i < tokens.length; i++) {
+                    clientFileList.getItems().add(tokens[i]);
+                }
+            }else{
+                clientFileList.getItems().add("up");
+                for (int i = 0; i < tokens.length; i++) {
+                    clientFileList.getItems().add(tokens[i]);
+                }
             }
         });
 
@@ -280,7 +294,7 @@ public class Controller {
         String filePath = "client/files/" + clientFileName;
 
         File file = new File(filePath);
-        System.out.println("file name " + file.getName());
+        System.out.println("file name file.getName(): " + file.getName());
         System.out.println("file length: " + file.length());
 
         String str = "/sendFile " + clientFileName;
@@ -333,8 +347,41 @@ public class Controller {
     }
 
     public void selectClientFile(MouseEvent mouseEvent) {
-        clientFileName = clientFileList.getSelectionModel().getSelectedItem();
-        System.out.println("clientFileName on click: " + clientFileName);
+        rootPath = clientPath;
+        clientPath = clientPath + "/" + clientFileList.getSelectionModel().getSelectedItem();
+        File file = new File(clientPath);
+        System.out.println("clientPath: " + clientPath);
+        System.out.println("file.getName(): " + file.getName());
+        if(file.isDirectory()){
+            System.out.println("file is directory");
+//            rootPath = clientPath + "/" + file.getName();
+            broadcastClientFile(clientPath);
+        }
+        clientPath = rootPath;
+//        rootPath = clientPath;
+//        System.out.println("rootPath " + rootPath);
+
+//        clientPath = clientPath + "/" + clientFileList.getSelectionModel().getSelectedItem();
+//        System.out.println("file.getParen " + file.getParent());
+//        if(clientFileList.getSelectionModel().getSelectedItem().equals("up")){
+//            System.out.println("select server: UP");
+////            broadcastClientFile(rootPath);
+//        }else{
+//            if(file.isDirectory()){
+//                System.out.println("enter dir");
+////                System.out.println("selectClientFile " + clientPath);
+//
+//                broadcastClientFile(clientPath);
+//
+//            }else{
+                clientFileName = clientFileList.getSelectionModel().getSelectedItem();
+
+//            }
+
+//        if(!clientFileList.getSelectionModel().getSelectedItem().endsWith(".")){
+//        }
+//        }
+
     }
 
     public void selectServerFile(MouseEvent mouseEvent) {
@@ -365,9 +412,6 @@ public class Controller {
                 file.createNewFile();
             }
             FileOutputStream fos = new FileOutputStream(file);
-
-
-
             BufferedInputStream bis = new BufferedInputStream(in);
 
             int x;
@@ -388,4 +432,21 @@ public class Controller {
         }
     }
 
+    public void deleteFileServer(ActionEvent actionEvent) {
+        String str = "/delFile " + serverFileName;
+        try {
+            out.writeUTF(str);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void deleteFileClient(ActionEvent actionEvent) {
+        String filePath = "client/files/" + clientFileName;
+        File file = new File(filePath);
+        file.delete();
+        broadcastClientFile(clientPath);
+    }
 }

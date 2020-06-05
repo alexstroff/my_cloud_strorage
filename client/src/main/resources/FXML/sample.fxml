@@ -57,10 +57,13 @@
                 <VBox HBox.hgrow="ALWAYS" spacing="5">
                     <ListView fx:id="clientFileList" onMouseClicked="#selectClientFile" ></ListView>
                     <Button fx:id="butFileToServer" VBox.vgrow="ALWAYS" text="Отправить файл на сервер" onAction="#sendFileToServer"></Button>
+                    <Button fx:id="delFileFromClient" VBox.vgrow="ALWAYS" text="Удалить" onAction="#deleteFileClient"></Button>
                 </VBox>
                 <VBox HBox.hgrow="ALWAYS" spacing="5">
                     <ListView fx:id="servertFileList" onMouseClicked="#selectServerFile" ></ListView>
                     <Button fx:id="butFileToClient" VBox.vgrow="ALWAYS" text="Отправить файл клиенту" onAction="#sendFileToClient"></Button>
+                    <Button fx:id="delFileFromServer" VBox.vgrow="ALWAYS" text="Удалить" onAction="#deleteFileServer"></Button>
+
 
                 </VBox>
             </HBox>

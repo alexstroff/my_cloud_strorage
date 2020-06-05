@@ -127,7 +127,16 @@ public class ClientHandler {
                             broadcastServerFile();
 
 
-                        } else if (msg.startsWith("/getFileFromServer")) {
+                        }
+                        if(msg.startsWith("/delFile")){
+                            String[] tockens = msg.split(" ");
+                            String path = "server/clients/" + nick + "/" + tockens[1];
+                            File file = new File(path);
+                            file.delete();
+                            broadcastServerFile();
+
+                        }
+                        else if (msg.startsWith("/getFileFromServer")) {
 
                             String[] tockens = msg.split(" ");
                             String path = "server/clients/" + nick + "/" + tockens[1];
