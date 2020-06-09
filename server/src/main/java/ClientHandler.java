@@ -23,7 +23,7 @@ public class ClientHandler {
         this.serv = serv;
         this.in = new DataInputStream(socket.getInputStream());
         this.out = new DataOutputStream(socket.getOutputStream());
-        this.bis = new BufferedInputStream(socket.getInputStream());
+        this.bis = new BufferedInputStream(in);
 
 
         new Thread(new Runnable() {
@@ -64,6 +64,8 @@ public class ClientHandler {
                                 String path = "server/clients/" + nick;
                                 File file = new File(path);
                                 file.mkdirs();
+                                broadcastServerFile();
+
                                 break;
                             }else{
                                 sendMsg("Неверный логин/пароль");
@@ -73,7 +75,7 @@ public class ClientHandler {
                     }
 
                     while (true) {
-                        broadcastServerFile();
+//                        broadcastServerFile();
                         String msg = in.readUTF();
 
                         if (msg.equals("/end")) {
@@ -100,29 +102,13 @@ public class ClientHandler {
                             }
                             FileOutputStream fos = new FileOutputStream(file);
 
-                            int x, y;
+                            int x;
                             byte[] buffer = new byte[8192];
-                            while (in.available() > 0) {
-                                if ((x = in.read(buffer)) != -1) {
-                                    fos.write(buffer, 0, x);
-                                    fos.flush();
-                                }
+                            while ((x = bis.read(buffer)) != -1){
+                                fos.write(buffer, 0, x);
+                                fos.flush();
                             }
-
-
-//                            while (bis.available() > 0) {
-//                                if ((x = bis.read(buffer)) != -1) {
-//                                    fos.write(buffer, 0, x);
-//                                    fos.flush();
-//                                }
-//                            }
-//                            while ((x = bis.read(buffer)) != -1){
-//                                System.out.println("x on server: " + x);
-//                                fos.write(buffer,0 ,x);
-//                                fos.flush();
-//                            }
                             fos.close();
-                            sendMsg("transOK");
                             System.out.println("recived");
                             broadcastServerFile();
 
@@ -136,9 +122,9 @@ public class ClientHandler {
                             broadcastServerFile();
 
                         }
-                        else if (msg.startsWith("/getFileFromServer")) {
+                        if (msg.startsWith("/getFileFromServer")) {
 
-                            String[] tockens = msg.split(" ");
+                            String[] tockens = msg.split(" ", 2);
                             String path = "server/clients/" + nick + "/" + tockens[1];
                             File file = new File(path);
                             System.out.println("from server fileName: " + file.getName());
@@ -148,49 +134,47 @@ public class ClientHandler {
                             long start =  System.currentTimeMillis();
                             System.out.println("START TRANS FROM SERVER");
 
-                            try(FileInputStream fis = new FileInputStream(file)) {
-                                BufferedOutputStream bos = new BufferedOutputStream(out);
+                            BufferedOutputStream bos = new BufferedOutputStream(out);
+                            byte[] buffer = new byte[8192];
+                            try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
+                                int x, y;
 
-                                int x;
-                                byte[] buffer = new byte[8192];
-
-                                while (fis.available() > 0){
-                                    if ((x = fis.read(buffer)) != -1 ) {
+                                while (bis.available() > 0){
+                                    if((x = bis.read(buffer)) != -1){
                                         bos.write(buffer, 0, x);
                                         bos.flush();
                                     }
                                 }
-
+                                bos.close();
                             } catch (FileNotFoundException e) {
                                 e.printStackTrace();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            System.out.println("client send");
-
+//
+//                            try(FileInputStream fis = new FileInputStream(file)) {
+//                                BufferedOutputStream bos = new BufferedOutputStream(out);
+//
+//                                int x;
+//                                byte[] buffer = new byte[8192];
+//
+//                                while (fis.available() > 0){
+//                                    if ((x = fis.read(buffer)) != -1 ) {
+//                                        bos.write(buffer, 0, x);
+//                                        bos.flush();
+//                                    }
+//                                }
+//
+//                            } catch (FileNotFoundException e) {
+//                                e.printStackTrace();
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
+                            System.out.println("server send");
                             System.out.print("transfer time: ");
                             System.out.println(  System.currentTimeMillis() - start);
-
-
-
-
-
-                        }else if(msg.startsWith("/w")) {
-                            serv.sendPrivateMsg(nick, msg);
-                            String[] tockens = msg.split(" ", 3);
-                            LOGGER.info(nick + " отправил личное сообщение " + tockens[1]);
-                        }else if(msg.startsWith("/bl")){
-                            String tockens[] =msg.split(" ");
-                            if(DBService.getIdByNickname(tockens[1]) != null){
-                                DBService.addToBlackList(nick, tockens[1]);
-                                sendMsg("Пользователь: " + tockens[1] + " в черном списке.");
-                                String log = "add " + tockens[1] + " to blacklist";
-                                DBService.logger(nick, log);
-                                LOGGER.info(nick + " " + log);
-                                serv.broadcastClientsList();
-                            }else sendMsg("Вы хотите добавить в черный список несуществующего пользователя");
-                            LOGGER.info("Попытка добавить в черный список пользователем " + nick + " несуществующего клиента");
-                        }else serv.broadcastMsg(nick + " " +nick + ": " + msg);
+                        }
+//                        else serv.broadcastMsg(nick + " " +nick + ": " + msg);
 
                     }
                 } catch (IOException e) {

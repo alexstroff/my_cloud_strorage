@@ -36,30 +36,33 @@
 
     <HBox VBox.vgrow="ALWAYS" spacing="5" >
         <VBox HBox.hgrow="ALWAYS" spacing="5">
-            <HBox spacing="5">
-                <TextArea fx:id="textArea"  editable="false" VBox.vgrow="ALWAYS"/>
+<!--            <HBox spacing="5">-->
+<!--                <TextArea fx:id="textArea"  editable="false" VBox.vgrow="ALWAYS"/>-->
 
-                <ListView fx:id="clientList" onMouseClicked="#selectClient" ></ListView>
+<!--                <ListView fx:id="clientList" onMouseClicked="#selectClient" ></ListView>-->
 
-            </HBox>
+<!--            </HBox>-->
 
 
-            <HBox spacing="5" fx:id="bottomPanel" managed="false" visible="false" HBox.hgrow="ALWAYS">
-                <TextField fx:id="textField" HBox.hgrow="ALWAYS" promptText="Введите сообщение"
-                           onAction="#sendMsg"/>
-                <VBox.margin>
-                    <Insets right="5"></Insets>
-                </VBox.margin>
-                <Button fx:id="but" VBox.vgrow="ALWAYS" text="Отправить сообщение" onAction="#sendMsg"></Button>
-            </HBox>
+<!--            <HBox spacing="5" fx:id="bottomPanel" managed="false" visible="false" HBox.hgrow="ALWAYS">-->
+<!--                <TextField fx:id="textField" HBox.hgrow="ALWAYS" promptText="Введите сообщение"-->
+<!--                           onAction="#sendMsg"/>-->
+<!--                <VBox.margin>-->
+<!--                    <Insets right="5"></Insets>-->
+<!--                </VBox.margin>-->
+<!--                <Button fx:id="but" VBox.vgrow="ALWAYS" text="Отправить сообщение" onAction="#sendMsg"></Button>-->
+<!--            </HBox>-->
 
             <HBox spacing="5" fx:id="transferPannel" managed="false" visible="false" HBox.hgrow="ALWAYS">
                 <VBox HBox.hgrow="ALWAYS" spacing="5">
+                    <Button fx:id="upButClient" VBox.vgrow="ALWAYS" text="Вверх" onAction="#upClientDir" visible="true"></Button>
                     <ListView fx:id="clientFileList" onMouseClicked="#selectClientFile" ></ListView>
                     <Button fx:id="butFileToServer" VBox.vgrow="ALWAYS" text="Отправить файл на сервер" onAction="#sendFileToServer"></Button>
                     <Button fx:id="delFileFromClient" VBox.vgrow="ALWAYS" text="Удалить" onAction="#deleteFileClient"></Button>
                 </VBox>
                 <VBox HBox.hgrow="ALWAYS" spacing="5">
+                    <Button fx:id="upButServer" VBox.vgrow="ALWAYS" text="Вверх" onAction="#upServertDir" visible="true"></Button>
+
                     <ListView fx:id="servertFileList" onMouseClicked="#selectServerFile" ></ListView>
                     <Button fx:id="butFileToClient" VBox.vgrow="ALWAYS" text="Отправить файл клиенту" onAction="#sendFileToClient"></Button>
                     <Button fx:id="delFileFromServer" VBox.vgrow="ALWAYS" text="Удалить" onAction="#deleteFileServer"></Button>

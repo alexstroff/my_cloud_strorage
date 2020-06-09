@@ -66,14 +66,14 @@ public class MainServ {
         System.out.println("Клиент " + client.nick +  " отключился");
     }
 
-    public void broadcastMsg(String msg) {
-        String[] tockens = msg.split(" ", 2);
-        for (ClientHandler o: clients) {
-           if(DBService.getBlackList(o.getNick(), tockens[0]) == null){
-               o.sendMsg(tockens[1]);
-           }
-        }
-    }
+//    public void broadcastMsg(String msg) {
+//        String[] tockens = msg.split(" ", 2);
+//        for (ClientHandler o: clients) {
+//           if(DBService.getBlackList(o.getNick(), tockens[0]) == null){
+//               o.sendMsg(tockens[1]);
+//           }
+//        }
+//    }
 
     public boolean checkNick(String newNick) {
         boolean check = false;
