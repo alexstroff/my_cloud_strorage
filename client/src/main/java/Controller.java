@@ -23,23 +23,12 @@ public class Controller {
     @FXML
     TextField setPasswordField;
 
-    @FXML
-    ListView<String> clientList;
 
     @FXML
     ListView<String> servertFileList;
 
     @FXML
     ListView<String> clientFileList;
-
-    @FXML
-    TextArea textArea;
-
-    @FXML
-    TextField textField;
-
-//    @FXML
-//    HBox bottomPanel;
 
     @FXML
     HBox regPanel;
@@ -63,13 +52,13 @@ public class Controller {
     Socket socket;
     DataInputStream in;
     DataOutputStream out;
+    BufferedInputStream bis;
 
 
-    String clientFileName;
-    String serverFileName;
-    String rootPath = "client/files";
-//    String clientPath = rootPath;
-    List<String> path = new ArrayList<>();
+    private String clientFileName;
+    private String serverFileName;
+    private final String rootPath = "client/files";
+    private List<String> path = new ArrayList<>();
 
     private String nick;
 
@@ -132,6 +121,7 @@ public class Controller {
             socket = new Socket(IP_ADRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
+            bis = new BufferedInputStream(in);
 
 
 
@@ -145,38 +135,20 @@ public class Controller {
                             String srt = in.readUTF();
                             if (srt.equals("/authok")) {
                                 setAuthorised(true);
-//                                textArea.appendText("Авторизация прошла успешно" + "\n");
-
                                 File file = new File(rootPath);
                                 file.mkdirs();
                                 path.add(rootPath);
-
                                 break;
                             }else if (srt.equals("/regok")) {
-//                                textArea.appendText("Регистрация прошла успешно" + "\n");
                                 setRegistration(true);
                             }
-//                            else {
-//                                textArea.appendText(srt + "\n");
-//                            }
                         }
-
-
                         while (true) {
                             broadcastClientFile(dirPath(path));
 
                             String str = in.readUTF();
                             if (str.startsWith("/")) {
                                 if (str.equals("/serverclosed")) break;
-//                                if (str.startsWith("/clientslist ")) {
-//                                    String[] tokens = str.split(" ");
-//                                    Platform.runLater(() -> {
-//                                        clientList.getItems().clear();
-//                                        for (int i = 1; i < tokens.length; i++) {
-//                                            clientList.getItems().add(tokens[i]);
-//                                        }
-//                                    });
-//                                }
                                 if (str.startsWith("/serverfilelist ")) {
                                     String[] tokens = str.split(" ");
                                     Platform.runLater(() -> {
@@ -190,8 +162,6 @@ public class Controller {
                                 if(str.startsWith("/sendFileFromServer")){
                                     sendFileFromServer(str);
                                 }
-                            } else {
-//                                textArea.appendText(str + "\n");
                             }
                         }
                     } catch (IOException e) {
@@ -212,17 +182,6 @@ public class Controller {
         }
     }
 
-
-//    public void sendMsg() {
-//        try {
-//            out.writeUTF(textField.getText());
-//            textField.clear();
-//            textField.requestFocus();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     public void broadcastClientFile(String path){
 
         File file = new File(path);
@@ -233,7 +192,6 @@ public class Controller {
             sb.append(fileName + " ");
         }
         String out = sb.toString();
-
         String[] tokens = out.split(" ");
         Platform.runLater(() -> {
             clientFileList.getItems().clear();
@@ -270,15 +228,9 @@ public class Controller {
         }
     }
 
-    public void selectClient(MouseEvent mouseEvent) {
-    }
-
-
     public void regpanel(ActionEvent event) {
         upperPanel.setVisible(false);
         upperPanel.setManaged(false);
-//        bottomPanel.setVisible(false);
-//        bottomPanel.setManaged(false);
         regPanel.setManaged(true);
         regPanel.setVisible(true);
     }
@@ -303,7 +255,6 @@ public class Controller {
         System.out.println("fileName on but: " + clientFileName);
         String filePath = dirPath(path) + "/" + clientFileName;
         System.out.println("путь к файлу с листоп path: " + filePath);
-
         File file = new File(filePath);
         System.out.println("имя файла при отправке: " + file.getName());
         if(file.getName() != null){
@@ -313,10 +264,8 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             long start =  System.currentTimeMillis();
             System.out.println("START TRANS");
-
             BufferedOutputStream bos = new BufferedOutputStream(out);
             byte[] buffer = new byte[8192];
             try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
@@ -325,7 +274,9 @@ public class Controller {
                     bos.write(buffer, 0, x);
                     bos.flush();
                 }
-                bos.close();
+                System.out.println("trans to serv OK");
+                System.out.print("transfer time: ");
+                System.out.print(System.currentTimeMillis() - start);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -333,35 +284,6 @@ public class Controller {
             }
 
         }
-
-
-
-
-//        try(FileInputStream fis = new FileInputStream(file);
-//           ) {
-//            BufferedOutputStream bos = new BufferedOutputStream(out);
-//
-//            int x;
-//            byte[] buffer = new byte[8192];
-//
-//            while (fis.available() > 0){
-//                if ((x = fis.read(buffer)) != -1 ) {
-//                    bos.write(buffer, 0, x);
-//                    bos.flush();
-//                }
-//            }
-//
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-    }
-
-
-
-    public void selectServer(MouseEvent mouseEvent) {
     }
 
     public void upClientDir(ActionEvent actionEvent) {
@@ -405,8 +327,8 @@ public class Controller {
 
     }
     private void sendFileFromServer(String str) {
-        System.out.println("Client stert Recive");
-        String[] tockens = str.split(" ");
+        System.out.println("Client start Recive");
+        String[] tockens = str.split(" ",2);
         String fileName = dirPath(path)  + "/" + tockens[1];
         System.out.println("путь файла: " + fileName);
         File file = new File(fileName);
@@ -419,12 +341,12 @@ public class Controller {
         }
 
         try(FileOutputStream fos = new FileOutputStream(file)){
-            BufferedInputStream bis = new BufferedInputStream(in);
             int x;
             byte[] buffer = new byte[8192];
-            while ((x = bis.read(buffer)) != -1){
-                fos.write(buffer, 0, x);
-                fos.flush();
+            while (( bis.available()) > 0){
+                if((x = bis.read(buffer)) != -1){
+                    fos.write(buffer, 0, x);
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -435,39 +357,6 @@ public class Controller {
         broadcastClientFile(dirPath(path));
     }
 
-//        System.out.println("client start recive from server");
-//        String[] tockens = str.split(" ");
-//
-//        String filePath = "client/files/";
-//
-//        String fileName = filePath  + "/" + tockens[1];
-//
-//        File file = new File(fileName);
-//        try {
-//            if(!file.exists()){
-//                file.createNewFile();
-//            }
-//            FileOutputStream fos = new FileOutputStream(file);
-//            BufferedInputStream bis = new BufferedInputStream(in);
-//
-//            int x;
-//            byte[] buffer = new byte[8192];
-//            while (bis.available() > 0){
-//                if((x = bis.read(buffer)) != -1){
-//                    fos.write(buffer,0 ,x);
-//                    fos.flush();
-//                }
-//            }
-//            fos.close();
-//            System.out.println("client recived");
-//
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     public void deleteFileServer(ActionEvent actionEvent) {
         String str = "/delFile " + serverFileName;
         try {
@@ -475,8 +364,6 @@ public class Controller {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     public void deleteFileClient(ActionEvent actionEvent) {
@@ -486,7 +373,11 @@ public class Controller {
         broadcastClientFile(dirPath(path));
     }
 
+    public void back(ActionEvent actionEvent) {
+        upperPanel.setVisible(true);
+        upperPanel.setManaged(true);
+        regPanel.setManaged(false);
+        regPanel.setVisible(false);
 
-    public void upServertDir(ActionEvent actionEvent) {
     }
 }

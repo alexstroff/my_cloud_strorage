@@ -10,6 +10,12 @@
 .text-area .content{
     -fx-background-color: cornsilk;
 }
+#clientLabel{
+    -fx-font-size: 18px;
+}
+#serverLabel{
+    -fx-font-size: 18px;
+}
 /*.list-cell{*/
 /*    -fx-background-color: cornsilk;*/
 /*    -fx-cell-color: cornsilk;*/
