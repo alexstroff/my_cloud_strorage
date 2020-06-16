@@ -1,3 +1,5 @@
+package src.main.java;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -39,30 +41,30 @@ public class MainServ {
     }
 
 
-    public void broadcastClientsList() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("/clientslist ");
-        for (ClientHandler o : clients) {
-                sb.append(o.getNick() + " ");
-        }
-        String out = sb.toString();
-        for (ClientHandler o : clients) {
-            String clientList = DBService.isInBlacklist(o, out);
-            o.sendMsg(clientList);
-        }
-    }
+//    public void broadcastClientsList() {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("/clientslist ");
+//        for (ClientHandler o : clients) {
+//                sb.append(o.getNick() + " ");
+//        }
+//        String out = sb.toString();
+//        for (ClientHandler o : clients) {
+//            String clientList = DBService.isInBlacklist(o, out);
+//            o.sendMsg(clientList);
+//        }
+//    }
 
 
 
     public void subscribe(ClientHandler client){
         clients.add(client);
         System.out.println("Клиент " + client.nick +  " подключился");
-        broadcastClientsList();
+//        broadcastClientsList();
     }
 
     public void unsubscribe(ClientHandler client) {
         clients.remove(client);
-        broadcastClientsList();
+//        broadcastClientsList();
         System.out.println("Клиент " + client.nick +  " отключился");
     }
 
@@ -83,19 +85,19 @@ public class MainServ {
         return check;
     }
 
-    public void sendPrivateMsg(String nick, String msg) {
-        String[] tockens = msg.split(" ", 3);
-        for (ClientHandler o: clients){
-            if (tockens[1].equals(o.nick)) {
-                o.sendMsg(nick + " :" + tockens[2]);
-                break;
-            }
-        }
-        for (ClientHandler o: clients){
-            if(o.nick.equals(nick)){
-                o.sendMsg(nick + " :" + tockens[2]);
-                break;
-            }
-        }
-    }
+//    public void sendPrivateMsg(String nick, String msg) {
+//        String[] tockens = msg.split(" ", 3);
+//        for (ClientHandler o: clients){
+//            if (tockens[1].equals(o.nick)) {
+//                o.sendMsg(nick + " :" + tockens[2]);
+//                break;
+//            }
+//        }
+//        for (ClientHandler o: clients){
+//            if(o.nick.equals(nick)){
+//                o.sendMsg(nick + " :" + tockens[2]);
+//                break;
+//            }
+//        }
+//    }
 }

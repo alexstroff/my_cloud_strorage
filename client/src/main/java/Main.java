@@ -1,3 +1,5 @@
+package main.java;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -19,8 +21,8 @@ public class Main extends Application {
             Parent root = loader.load(getClass().getResourceAsStream(fxmlFile));
             primaryStage.setTitle("Chat");
             c = loader.getController();
-            primaryStage.setScene(new Scene(root, 440, 375));
-            primaryStage.getIcons().add(new Image("icon.png"));
+            primaryStage.setScene(new Scene(root, 540, 375));
+            primaryStage.getIcons().add(new Image("/icon.png"));
             primaryStage.show();
 
             primaryStage.setOnCloseRequest((WindowEvent event) -> {

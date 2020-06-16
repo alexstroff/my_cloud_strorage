@@ -1,3 +1,5 @@
+package main.java;
+
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -7,7 +9,10 @@ import javafx.scene.layout.HBox;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +20,7 @@ public class Controller {
 
     public HBox transferPannel;
     @FXML
+
     TextField setLoginField;
 
     @FXML
@@ -52,7 +58,8 @@ public class Controller {
     Socket socket;
     DataInputStream in;
     DataOutputStream out;
-    BufferedInputStream bis;
+    SocketChannel channel;
+//    BufferedInputStream bis;
 
 
     private String clientFileName;
@@ -121,7 +128,6 @@ public class Controller {
             socket = new Socket(IP_ADRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
-            bis = new BufferedInputStream(in);
 
 
 
@@ -207,6 +213,7 @@ public class Controller {
         try {
             if (out != null) {
                 out.writeUTF("/end");
+                out.flush();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -220,6 +227,7 @@ public class Controller {
         try {
             nick = loginField.getText();
             out.writeUTF("/auth " + nick + " " + passwordField.getText());
+            out.flush();
             loginField.clear();
             passwordField.clear();
 
@@ -242,6 +250,7 @@ public class Controller {
         try {
             out.writeUTF("/reg " + setNicknameField.getText() + " " + setLoginField.getText() + " " +
                     setPasswordField.getText());
+            out.flush();
             setNicknameField.clear();
             setLoginField.clear();
             setPasswordField.clear();
@@ -258,23 +267,32 @@ public class Controller {
         File file = new File(filePath);
         System.out.println("имя файла при отправке: " + file.getName());
         if(file.getName() != null){
-            String str = "/sendFile " + clientFileName;
+            String str = "/sendFileToServer " + clientFileName;
             try {
                 out.writeUTF(str);
+                out.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
             long start =  System.currentTimeMillis();
             System.out.println("START TRANS");
-            BufferedOutputStream bos = new BufferedOutputStream(out);
+
             byte[] buffer = new byte[8192];
-            try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
-                int x;
-                while ((x = bis.read(buffer)) != -1){
-                    bos.write(buffer, 0, x);
-                    bos.flush();
+            try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                BufferedOutputStream bos = new BufferedOutputStream(new DataOutputStream(socket.getOutputStream()));) {
+                int x = 0;
+                while (bis.available() > 0){
+                    if((x = bis.read(buffer)) != -1) {
+                        bos.write(buffer, 0, x);
+                        bos.flush();
+//                        out.write(buffer, 0 ,x);
+//                        out.flush();
+                    }
                 }
+                System.out.println("X: " + x);
+//                bos.close();
                 System.out.println("trans to serv OK");
+
                 System.out.print("transfer time: ");
                 System.out.print(System.currentTimeMillis() - start);
             } catch (FileNotFoundException e) {
@@ -321,6 +339,7 @@ public class Controller {
         String str = "/getFileFromServer " + serverFileName;
         try {
             out.writeUTF(str);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -328,6 +347,7 @@ public class Controller {
     }
     private void sendFileFromServer(String str) {
         System.out.println("Client start Recive");
+
         String[] tockens = str.split(" ",2);
         String fileName = dirPath(path)  + "/" + tockens[1];
         System.out.println("путь файла: " + fileName);
@@ -340,12 +360,15 @@ public class Controller {
             }
         }
 
-        try(FileOutputStream fos = new FileOutputStream(file)){
+        try(FileOutputStream fos = new FileOutputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())){
             int x;
             byte[] buffer = new byte[8192];
             while (( bis.available()) > 0){
                 if((x = bis.read(buffer)) != -1){
+                    System.out.println("X: " + x);
                     fos.write(buffer, 0, x);
+                    fos.flush();
                 }
             }
         } catch (FileNotFoundException e) {
@@ -353,7 +376,7 @@ public class Controller {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("recived");
+        System.out.println("Client recive");
         broadcastClientFile(dirPath(path));
     }
 
@@ -361,6 +384,7 @@ public class Controller {
         String str = "/delFile " + serverFileName;
         try {
             out.writeUTF(str);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
