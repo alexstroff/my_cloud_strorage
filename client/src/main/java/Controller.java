@@ -59,7 +59,6 @@ public class Controller {
     DataInputStream in;
     DataOutputStream out;
     SocketChannel channel;
-//    BufferedInputStream bis;
 
 
     private String clientFileName;
@@ -83,16 +82,11 @@ public class Controller {
             upperPanel.setManaged(true);
             transferPannel.setVisible(false);
             transferPannel.setManaged(false);
-
-//            bottomPanel.setVisible(false);
-//            bottomPanel.setManaged(false);
             regPanel.setManaged(false);
             regPanel.setVisible(false);
         }else {
             upperPanel.setVisible(false);
             upperPanel.setManaged(false);
-//            bottomPanel.setVisible(true);
-//            bottomPanel.setManaged(true);
             regPanel.setManaged(false);
             regPanel.setVisible(false);
             transferPannel.setVisible(true);
@@ -105,8 +99,6 @@ public class Controller {
         if(!isAuthorised){
             upperPanel.setVisible(false);
             upperPanel.setManaged(false);
-//            bottomPanel.setVisible(true);
-//            bottomPanel.setManaged(true);
             regPanel.setManaged(false);
             regPanel.setVisible(false);
             transferPannel.setVisible(true);
@@ -114,8 +106,6 @@ public class Controller {
         }else {
             upperPanel.setVisible(true);
             upperPanel.setManaged(true);
-//            bottomPanel.setVisible(false);
-//            bottomPanel.setManaged(false);
             regPanel.setManaged(false);
             regPanel.setVisible(false);
             transferPannel.setVisible(false);
@@ -128,10 +118,7 @@ public class Controller {
             socket = new Socket(IP_ADRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
-
-
-
-
+            SocketChannel channel = socket.getChannel();
 
             new Thread(new Runnable() {
                 @Override
@@ -230,7 +217,6 @@ public class Controller {
             out.flush();
             loginField.clear();
             passwordField.clear();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -260,12 +246,8 @@ public class Controller {
     }
 
     public void sendFileToServer(ActionEvent actionEvent) {
-        System.out.println("имя файла в листе path: " + path.get(path.size() - 1));
-        System.out.println("fileName on but: " + clientFileName);
         String filePath = dirPath(path) + "/" + clientFileName;
-        System.out.println("путь к файлу с листоп path: " + filePath);
         File file = new File(filePath);
-        System.out.println("имя файла при отправке: " + file.getName());
         if(file.getName() != null){
             String str = "/sendFileToServer " + clientFileName;
             try {
@@ -274,9 +256,6 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            long start =  System.currentTimeMillis();
-            System.out.println("START TRANS");
-
             byte[] buffer = new byte[8192];
             try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
                 BufferedOutputStream bos = new BufferedOutputStream(new DataOutputStream(socket.getOutputStream()));) {
@@ -285,16 +264,8 @@ public class Controller {
                     if((x = bis.read(buffer)) != -1) {
                         bos.write(buffer, 0, x);
                         bos.flush();
-//                        out.write(buffer, 0 ,x);
-//                        out.flush();
                     }
                 }
-                System.out.println("X: " + x);
-//                bos.close();
-                System.out.println("trans to serv OK");
-
-                System.out.print("transfer time: ");
-                System.out.print(System.currentTimeMillis() - start);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -317,7 +288,6 @@ public class Controller {
         if (!file.isDirectory()){
             path.remove(path.size() - 1);
         }else broadcastClientFile(dirPath(path));
-
         clientFileName = clientFileList.getSelectionModel().getSelectedItem();
     }
 
@@ -332,7 +302,6 @@ public class Controller {
 
     public void selectServerFile(MouseEvent mouseEvent) {
         serverFileName = servertFileList.getSelectionModel().getSelectedItem();
-        System.out.println("serverFileName on click: " + serverFileName);
     }
 
     public void sendFileToClient(ActionEvent actionEvent) {
@@ -346,11 +315,8 @@ public class Controller {
 
     }
     private void sendFileFromServer(String str) {
-        System.out.println("Client start Recive");
-
         String[] tockens = str.split(" ",2);
         String fileName = dirPath(path)  + "/" + tockens[1];
-        System.out.println("путь файла: " + fileName);
         File file = new File(fileName);
         if(!file.exists()) {
             try {
@@ -376,7 +342,6 @@ public class Controller {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Client recive");
         broadcastClientFile(dirPath(path));
     }
 

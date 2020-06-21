@@ -10,7 +10,6 @@ public class ClientHandler {
 
     DataInputStream in;
     DataOutputStream out;
-//    BufferedInputStream bis;
 
     MainServ serv;
     String nick;
@@ -23,9 +22,6 @@ public class ClientHandler {
         this.serv = serv;
         this.in = new DataInputStream(socket.getInputStream());
         this.out = new DataOutputStream(socket.getOutputStream());
-//        this.bis = new BufferedInputStream(in);
-
-
 
         new Thread(new Runnable() {
             @Override
@@ -80,13 +76,8 @@ public class ClientHandler {
                         }
                         if(msg.startsWith("/sendFileToServer")) {
                             String[] tokens = msg.split(" ", 2);
-                            System.out.println("server start recive");
-                            System.out.println("fileName " + tokens[1]);
-
                             String filePath = "server/clients/" + nick;
-
                             String fileName = filePath + "/" + tokens[1];
-
                             File file = new File(filePath);
                             file.mkdirs();
                             System.out.println("filePath " + fileName);
@@ -94,10 +85,8 @@ public class ClientHandler {
                             if (!file.exists()) {
                                 file.createNewFile();
                             }
-
                             FileOutputStream fos = new FileOutputStream(file);
                             BufferedInputStream bis = new BufferedInputStream(new DataInputStream(socket.getInputStream()));
-
                             int x;
                             byte[] buffer = new byte[8192];
                             while (( bis.available()) > 0){
@@ -107,7 +96,6 @@ public class ClientHandler {
                             }
                             fos.close();
                             bis.close();
-                            System.out.println("recived");
                             broadcastServerFile();
                         }
                         if(msg.startsWith("/delFile")){
@@ -119,23 +107,16 @@ public class ClientHandler {
 
                         }
                         if (msg.startsWith("/getFileFromServer")) {
-
                             String[] tockens = msg.split(" ", 2);
                             String path = "server/clients/" + nick + "/" + tockens[1];
                             File file = new File(path);
-                            System.out.println("from server fileName: " + file.getName());
                             String outMsg = "/sendFileFromServer " + file.getName();
-
                             out.writeUTF(outMsg);
                             out.flush();
-                            long start =  System.currentTimeMillis();
-                            System.out.println("START TRANS FROM SERVER");
-
                             BufferedOutputStream bos = new BufferedOutputStream(out);
                             byte[] buffer = new byte[8192];
                             try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
                                 int x;
-
                                 while (bis.available() > 1){
                                     if((x = bis.read(buffer)) != -1) {
                                         bos.write(buffer, 0, x);
@@ -144,16 +125,12 @@ public class ClientHandler {
                                     }
                                 }
                                 bos.close();
-
                                 broadcastServerFile();
                             } catch (FileNotFoundException e) {
                                 e.printStackTrace();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            System.out.println("TRANS FROM SERV OK");
-                            System.out.print("transfer time: ");
-                            System.out.println(  System.currentTimeMillis() - start);
                         }
                     }
                 } catch (IOException e) {
