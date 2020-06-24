@@ -16,7 +16,7 @@ public class MainServ {
         try {
             DBService.connect();
             server = new ServerSocket(8189);
-            System.out.println("Сервер запущен!");
+            System.out.println("Server started");
 
             while (true) {
                 socket = server.accept();

@@ -9,16 +9,21 @@ import javafx.scene.layout.HBox;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Controller {
 
     public HBox transferPannel;
+
+    @FXML
+
+    Label autLable;
+
+    @FXML
+
+    Label regLable;
+
     @FXML
 
     TextField setLoginField;
@@ -52,13 +57,12 @@ public class Controller {
     Button upButClient;
 
     @FXML
-    Button upButServer;
+    Button updateServerFilelist;
 
 
     Socket socket;
     DataInputStream in;
     DataOutputStream out;
-    SocketChannel channel;
 
 
     private String clientFileName;
@@ -68,10 +72,14 @@ public class Controller {
 
     private String nick;
 
+    private String str;
+
 
 
     final String IP_ADRESS = "localhost";
     final int PORT = 8189;
+
+    public static boolean isAlive = true;
 
     private boolean isAuthorised;
 
@@ -118,61 +126,52 @@ public class Controller {
             socket = new Socket(IP_ADRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
-            SocketChannel channel = socket.getChannel();
 
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         while (true) {
-                            String srt = in.readUTF();
-                            if (srt.equals("/authok")) {
-                                setAuthorised(true);
-                                File file = new File(rootPath);
-                                file.mkdirs();
-                                path.add(rootPath);
-                                break;
-                            }else if (srt.equals("/regok")) {
+                            str = in.readUTF();
+                            if (str.equals("/authok")) {
+                            setAuthorised(true);
+                            File file = new File(rootPath);
+                            file.mkdirs();
+                            path.add(rootPath);
+                            broadcastClientFile(dirPath(path));
+                            broadcastServertFileList();
+                            System.out.println("client connected");
+                            break;
+                            }else if (str.equals("/regok")) {
                                 setRegistration(true);
                             }
-                        }
-                        while (true) {
-                            broadcastClientFile(dirPath(path));
-
-                            String str = in.readUTF();
-                            if (str.startsWith("/")) {
-                                if (str.equals("/serverclosed")) break;
-                                if (str.startsWith("/serverfilelist ")) {
-                                    String[] tokens = str.split(" ");
-                                    Platform.runLater(() -> {
-                                        servertFileList.getItems().clear();
-                                        for (int i = 1; i < tokens.length; i++) {
-                                            servertFileList.getItems().add(tokens[i]);
-                                        }
-                                    });
-                                }
-
-                                if(str.startsWith("/sendFileFromServer")){
-                                    sendFileFromServer(str);
-                                }
+                            else if(str.startsWith("/isBusy")){
+                                String[] tockens = str.split(" ", 2);
+                                regLableSetText(tockens[1]);
+                            }else if(str.startsWith("/authProblem")){
+                                String[] tockens = str.split(" ", 2);
+                                autLableSetText(tockens[1]);
+                            }else if(str.startsWith("/errlog")){
+                                String[] tockens = str.split(" ", 2);
+                                autLableSetText(tockens[1]);
                             }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
-                    } finally {
-                        try {
-                            socket.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        setAuthorised(false);
                     }
                 }
             }).start();
+
         } catch (IOException e) {
 
             e.printStackTrace();
         }
+    }
+
+    private void regLableSetText(String str) {
+
+        Platform.runLater(() -> regLable.setText(str));
+
     }
 
     public void broadcastClientFile(String path){
@@ -182,17 +181,16 @@ public class Controller {
 
         String[] str = file.list();
         for (String fileName:str) {
-            sb.append(fileName + " ");
+            sb.append(fileName + "!@");
         }
         String out = sb.toString();
-        String[] tokens = out.split(" ");
+        String[] tokens = out.split("!@");
         Platform.runLater(() -> {
             clientFileList.getItems().clear();
-                for (int i = 0; i < tokens.length; i++) {
-                    clientFileList.getItems().add(tokens[i]);
-                }
+            for (int i = 0; i < tokens.length; i++) {
+                clientFileList.getItems().add(tokens[i]);
+            }
         });
-
     }
 
     public void Dispose() {
@@ -201,6 +199,8 @@ public class Controller {
             if (out != null) {
                 out.writeUTF("/end");
                 out.flush();
+                isAlive = false;
+                setAuthorised(false);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -211,15 +211,23 @@ public class Controller {
         if(socket == null || socket.isClosed()){
             connect();
         }
-        try {
-            nick = loginField.getText();
-            out.writeUTF("/auth " + nick + " " + passwordField.getText());
-            out.flush();
-            loginField.clear();
-            passwordField.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if((loginField.getText().isEmpty()) || (passwordField.getText().isEmpty())) {
+            autLableSetText("Введите логин и пароль");
+        }else {
+            try {
+                nick = loginField.getText();
+                out.writeUTF("/auth" + "!@" + nick + "!@" + passwordField.getText());
+                out.flush();
+                loginField.clear();
+                passwordField.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    private void autLableSetText(String str) {
+        Platform.runLater(() -> autLable.setText(str));
     }
 
     public void regpanel(ActionEvent event) {
@@ -233,46 +241,72 @@ public class Controller {
         if(socket == null || socket.isClosed()){
             connect();
         }
-        try {
-            out.writeUTF("/reg " + setNicknameField.getText() + " " + setLoginField.getText() + " " +
-                    setPasswordField.getText());
-            out.flush();
-            setNicknameField.clear();
-            setLoginField.clear();
-            setPasswordField.clear();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(setNicknameField.getText().isEmpty() || setLoginField.getText().isEmpty() || setPasswordField.getText().isEmpty()){
+            regLableSetText("Введите Ник, Логин и пароль");
+        }else{
+            try {
+                out.writeUTF("/reg" + "!@" + setNicknameField.getText() + "!@" + setLoginField.getText() + "!@" +
+                        setPasswordField.getText());
+                out.flush();
+                setNicknameField.clear();
+                setLoginField.clear();
+                setPasswordField.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public void sendFileToServer(ActionEvent actionEvent) {
         String filePath = dirPath(path) + "/" + clientFileName;
         File file = new File(filePath);
-        if(file.getName() != null){
-            String str = "/sendFileToServer " + clientFileName;
+        if(file.getName() != null) {
+            String outMsg = "/sendFileToServer" + "!@" + clientFileName + "!@" + file.length();
+            System.out.println(file.length());
             try {
-                out.writeUTF(str);
-                out.flush();
+                this.out.writeUTF(outMsg);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            byte[] buffer = new byte[8192];
-            try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-                BufferedOutputStream bos = new BufferedOutputStream(new DataOutputStream(socket.getOutputStream()));) {
-                int x = 0;
-                while (bis.available() > 0){
-                    if((x = bis.read(buffer)) != -1) {
-                        bos.write(buffer, 0, x);
-                        bos.flush();
-                    }
+            int x, y = 0;
+            byte[] buffer = new byte[10240];
+            try {
+                FileInputStream fis = new FileInputStream(file);
+                while ((x = fis.read(buffer)) != -1){
+                    out.write(buffer, 0, x);
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            System.out.println("transfer OK");
+            broadcastServertFileList();
         }
+    }
+
+
+
+    private void broadcastServertFileList() {
+        try {
+            out.writeUTF("/broadcatsserverfiles");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+            try {
+                str = in.readUTF();
+                if (str.startsWith("/serverfilelist")) {
+                    String[] tokens = str.split("!@");
+                    Platform.runLater(() -> {
+                        servertFileList.getItems().clear();
+                        for (int i = 1; i < tokens.length; i++) {
+                            servertFileList.getItems().add(tokens[i]);
+                        }
+                    });
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
     }
 
     public void upClientDir(ActionEvent actionEvent) {
@@ -305,54 +339,65 @@ public class Controller {
     }
 
     public void sendFileToClient(ActionEvent actionEvent) {
-        String str = "/getFileFromServer " + serverFileName;
+
+        String out = "/getFileFromServer!@" + serverFileName;
         try {
-            out.writeUTF(str);
-            out.flush();
+            this.out.writeUTF(out);
+            this.out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        sendFileFromServer();
 
     }
-    private void sendFileFromServer(String str) {
-        String[] tockens = str.split(" ",2);
-        String fileName = dirPath(path)  + "/" + tockens[1];
-        File file = new File(fileName);
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    private void sendFileFromServer() {
 
-        try(FileOutputStream fos = new FileOutputStream(file);
-        BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())){
-            int x;
-            byte[] buffer = new byte[8192];
-            while (( bis.available()) > 0){
-                if((x = bis.read(buffer)) != -1){
-                    System.out.println("X: " + x);
-                    fos.write(buffer, 0, x);
-                    fos.flush();
+        try {
+            String str = in.readUTF();
+            if (str.startsWith("/sendFileFromServer")) {
+                String[] tockens = str.split("!@", 3);
+                long fileSize = Long.parseLong(tockens[2]);
+                String fileName = dirPath(path) + "/" + tockens[1];
+                File file = new File(fileName);
+                if (!file.exists()) {
+                    try {
+                        file.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
+                try (FileOutputStream fos = new FileOutputStream(file);
+                     BufferedInputStream bis = new BufferedInputStream(socket.getInputStream())) {
+                    int x;
+                    byte[] buffer = new byte[10240];
+                    while ((in.available()) != 0) {
+                        x = in.read(buffer);
+                        fos.write(buffer, 0, x);
+                        fos.flush();
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                broadcastClientFile(dirPath(path));
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-        broadcastClientFile(dirPath(path));
+
     }
 
     public void deleteFileServer(ActionEvent actionEvent) {
-        String str = "/delFile " + serverFileName;
+        String out = "/delFile!@" + serverFileName;
         try {
-            out.writeUTF(str);
-            out.flush();
+            this.out.writeUTF(out);
+            this.out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        broadcastServertFileList();
     }
 
     public void deleteFileClient(ActionEvent actionEvent) {
@@ -368,5 +413,9 @@ public class Controller {
         regPanel.setManaged(false);
         regPanel.setVisible(false);
 
+    }
+
+    public void updateServer(ActionEvent actionEvent) {
+        broadcastServertFileList();
     }
 }
