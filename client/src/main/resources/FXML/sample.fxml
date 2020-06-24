@@ -15,10 +15,21 @@
     <stylesheets><URL value="@/CSS/Styles.css"/></stylesheets>
 
     <HBox fx:id="upperPanel">
-        <TextField HBox.hgrow="ALWAYS"  promptText="Логин" fx:id="loginField"></TextField>
-        <PasswordField promptText="Пароль" fx:id="passwordField" onAction="#tryToAuth"></PasswordField>
-        <Button text="Авторизация" onAction="#tryToAuth"></Button>
-        <Button text="Регистрация" onAction="#regpanel" alignment="BASELINE_RIGHT"></Button>
+        <VBox>
+            <HBox>
+                <TextField HBox.hgrow="ALWAYS"  promptText="Логин" fx:id="loginField"></TextField>
+                <PasswordField promptText="Пароль" fx:id="passwordField" onAction="#tryToAuth"></PasswordField>
+                <Button text="Авторизация" onAction="#tryToAuth"></Button>
+                <Button text="Регистрация" onAction="#regpanel" alignment="BASELINE_RIGHT"></Button>
+            </HBox>
+            <HBox>
+                <Label HBox.hgrow="ALWAYS" fx:id="autLable" ></Label>
+<!--                <PasswordField promptText="Пароль123" fx:id="passwordField1" onAction="#tryToAuth"></PasswordField>-->
+
+            </HBox>
+        </VBox>
+
+
     </HBox>
     <HBox fx:id="regPanel" managed="false" visible="false">
         <VBox>
@@ -30,6 +41,9 @@
             <HBox>
                 <Button text="Зарегистрироваться" onAction="#reg" alignment="BASELINE_RIGHT"></Button>
                 <Button text="Назад" onAction="#back" alignment="BASELINE_RIGHT"></Button>
+            </HBox>
+            <HBox>
+                <Label HBox.hgrow="ALWAYS" fx:id="regLable" ></Label>
             </HBox>
         </VBox>
     </HBox>
@@ -46,6 +60,7 @@
                 </VBox>
                 <VBox HBox.hgrow="ALWAYS" spacing="5">
                     <Label fx:id="serverLabel" text="Files on server" textAlignment="CENTER" ></Label>
+                    <Button fx:id="updateServerFilelist" VBox.vgrow="ALWAYS" text="Обновить" onAction="#updateServer"></Button>
 
                     <ListView fx:id="servertFileList" onMouseClicked="#selectServerFile" ></ListView>
                     <Button fx:id="butFileToClient" VBox.vgrow="ALWAYS" text="Отправить файл клиенту" onAction="#sendFileToClient"></Button>

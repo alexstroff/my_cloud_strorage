@@ -31,9 +31,9 @@ public class ClientHandler {
                     while (true) {
                         String msg = in.readUTF();
                         if(msg.startsWith("/reg")){
-                            String[] tockens = msg.split(" ");
+                            String[] tockens = msg.split("!@");
                             if(DBService.checkClient(tockens[1])){
-                                sendMsg("Ник занят попробуйте друдой");
+                                sendMsg("/isBusy Ник занят попробуйте друдой");
                                 DBService.logger(tockens[1], "register faild");
                             }else {
                                 DBService.regNewClient(tockens[1], tockens[2], tockens[3]);
@@ -42,10 +42,10 @@ public class ClientHandler {
                             }
                         }
                         if (msg.startsWith("/auth")) {
-                            String[] tockens = msg.split(" ");
+                            String[] tockens = msg.split("!@");
                             String newNick = DBService.getNickByLoginAndPass(tockens[1], tockens[2]);
                             if(serv.checkNick(newNick)){
-                                sendMsg("Логин/ник занят. Введите другой логин");
+                                sendMsg("/authProblem Логин/ник занят. Введите другой логин");
                                 DBService.logger(nick, "logg faild");
                             }
                             else if(newNick != null){
@@ -56,11 +56,10 @@ public class ClientHandler {
                                 String path = "server/clients/" + nick;
                                 File file = new File(path);
                                 file.mkdirs();
-                                broadcastServerFile();
 
                                 break;
                             }else{
-                                sendMsg("Неверный логин/пароль");
+                                sendMsg("/errlog Неверный логин/пароль");
                             }
                         }
                     }
@@ -74,58 +73,64 @@ public class ClientHandler {
                             out.flush();
                             break;
                         }
+                        if(msg.equals("/broadcatsserverfiles")){
+                            broadcastServerFile();
+
+                        }
                         if(msg.startsWith("/sendFileToServer")) {
-                            String[] tokens = msg.split(" ", 2);
+                            String[] tokens = msg.split("!@", 3);
                             String filePath = "server/clients/" + nick;
                             String fileName = filePath + "/" + tokens[1];
+                            long fileSize = Long.parseLong(tokens[2]);
+                            System.out.println(fileSize);
                             File file = new File(filePath);
                             file.mkdirs();
-                            System.out.println("filePath " + fileName);
                             file = new File(fileName);
                             if (!file.exists()) {
                                 file.createNewFile();
                             }
+                            System.out.println("start transfer");
+                            int x, y = 0;
+                            long start = System.currentTimeMillis();
+
+                            byte[] buffer = new byte[10240];
                             FileOutputStream fos = new FileOutputStream(file);
-                            BufferedInputStream bis = new BufferedInputStream(new DataInputStream(socket.getInputStream()));
-                            int x;
-                            byte[] buffer = new byte[8192];
-                            while (( bis.available()) > 0){
-                                if((x = bis.read(buffer)) != -1){
+                            try {
+                                BufferedInputStream bis = new BufferedInputStream(in);
+                                while (in.available() != 0){
+                                    x = in.read(buffer);
                                     fos.write(buffer, 0, x);
+                                    fos.flush();
                                 }
+                                System.out.println("y: " + y);
+                                System.out.print("Transfer done, transfer time: ");
+                                System.out.println(System.currentTimeMillis() - start);
+                            }catch (IOException e){
+                                e.printStackTrace();
                             }
-                            fos.close();
-                            bis.close();
-                            broadcastServerFile();
                         }
                         if(msg.startsWith("/delFile")){
-                            String[] tockens = msg.split(" ");
+                            String[] tockens = msg.split("!@");
                             String path = "server/clients/" + nick + "/" + tockens[1];
                             File file = new File(path);
                             file.delete();
-                            broadcastServerFile();
 
                         }
                         if (msg.startsWith("/getFileFromServer")) {
-                            String[] tockens = msg.split(" ", 2);
+                            String[] tockens = msg.split("!@", 2);
                             String path = "server/clients/" + nick + "/" + tockens[1];
                             File file = new File(path);
-                            String outMsg = "/sendFileFromServer " + file.getName();
+                            String outMsg = "/sendFileFromServer!@" + file.getName() + "!@" + file.length();
                             out.writeUTF(outMsg);
-                            out.flush();
-                            BufferedOutputStream bos = new BufferedOutputStream(out);
-                            byte[] buffer = new byte[8192];
+                            System.out.println("start");
+                            byte[] buffer = new byte[10240];
                             try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
                                 int x;
-                                while (bis.available() > 1){
-                                    if((x = bis.read(buffer)) != -1) {
-                                        bos.write(buffer, 0, x);
-                                        bos.flush();
-                                        System.out.println("X: " + x);
-                                    }
+                                while ((x = bis.read(buffer)) != -1){
+                                    out.write(buffer, 0, x);
+                                    out.flush();
                                 }
-                                bos.close();
-                                broadcastServerFile();
+                                System.out.println("OK");
                             } catch (FileNotFoundException e) {
                                 e.printStackTrace();
                             } catch (IOException e) {
@@ -173,12 +178,12 @@ public class ClientHandler {
         String path = "server/clients/" + nick;
         File file = new File(path);
         StringBuilder sb = new StringBuilder();
-        sb.append("/serverfilelist ");
+        sb.append("/serverfilelist!@");
         String[] str = file.list();
         for (String fileName:str) {
-            sb.append(fileName + " ");
+            sb.append(fileName + "!@");
         }
-        String out = sb.toString();
-        sendMsg(out);
+        String outMsg = sb.toString();
+        sendMsg(outMsg);
     }
 }
